@@ -1,74 +1,86 @@
 #include "BluetoothSerial.h"
 
-// Cek apakah Bluetooth didukung (tergantung board ESP32)
-#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
-#error Bluetooth tidak diaktifkan! Silakan nyalakan di menu board settings.
-#endif
-
 BluetoothSerial SerialBT;
 
-// Pin RGB LED berdasarkan perkabelan di gambar
-const int redPin = 2;   // D2
-const int greenPin = 4; // D4
-const int bluePin = 5;  // D5
-
-// Konfigurasi PWM ESP32
-const int freq = 5000;
-const int resolution = 8;
-const int redChannel = 0;
-const int greenChannel = 1;
-const int blueChannel = 2;
+// PIN Komponen (Sesuai proyekmu)
+const int pinRed = 12;
+const int pinGreen = 13;
+const int pinBlue = 14;
+const int pinBuzzer = 25; // Mengontrol buzzer
 
 void setup() {
-  Serial.begin(115200);
-
-  // Konfigurasi PWM Channel
-  ledcSetup(redChannel, freq, resolution);
-  ledcAttachPin(redPin, redChannel);
+  // Memulai Bluetooth dengan nama Tbot
+  SerialBT.begin("Tbot_Kelas5");
   
-  ledcSetup(greenChannel, freq, resolution);
-  ledcAttachPin(greenPin, greenChannel);
-  
-  ledcSetup(blueChannel, freq, resolution);
-  ledcAttachPin(bluePin, blueChannel);
+  // Mengatur semua PIN sebagai OUTPUT
+  pinMode(pinRed, OUTPUT);
+  pinMode(pinGreen, OUTPUT);
+  pinMode(pinBlue, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
 
-  // Inisialisasi Bluetooth Classic dengan Nama Perangkat
-  SerialBT.begin("ESP32_RGB_Picker"); // Nama bluetooth yang muncul di HP
-  Serial.println("Bluetooth Aktif! Silakan pairing dan sambungkan dari HP.");
+  // Set warna awal (Bawaan contoh developer)
+  setColor(37, 166, 154); 
 }
 
 void loop() {
-  // Mengecek apakah ada data yang masuk dari HP
-  if (SerialBT.available()) {
-    String data = SerialBT.readStringUntil('\n');
-    data.trim(); // Menghapus spasi atau karakter newline tambahan
+  // Jika ada data masuk dari Bluetooth HP
+  if (SerialBT.available() > 0) {
+    // Membaca semua data yang tersedia di buffer saat itu
+    String command = SerialBT.readString();
+    command.trim(); // Membersihkan sisa spasi tak terlihat
+
+    // --- 1. FITUR RGB PICKER (Format 9 Digit Angka) ---
+    if (command.length() == 9) {
+      int redValue = command.substring(0, 3).toInt();
+      int greenValue = command.substring(3, 6).toInt();
+      int blueValue = command.substring(6).toInt();
+      setColor(redValue, greenValue, blueValue);
+    }
     
-    Serial.println("Data diterima: " + data);
-
-    // Format data dari aplikasi Arduino Bluetooth Controller (biasanya mengirim format "R,G,B")
-    // Contoh: 255,0,128
-    int firstComma = data.indexOf(',');
-    int secondComma = data.lastIndexOf(',');
-
-    if (firstComma > 0 && secondComma > firstComma) {
-      int r = data.substring(0, firstComma).toInt();
-      int g = data.substring(firstComma + 1, secondComma).toInt();
-      int b = data.substring(secondComma + 1).toInt();
-
-      // Batasi nilai agar tetap di rentang 0 - 255
-      r = constrain(r, 0, 255);
-      g = constrain(g, 0, 255);
-      b = constrain(b, 0, 255);
-
-      // Kirim ke PWM LED RGB 
-      // (Catatan: Jika pakai Common Anode, ubah jadi ledcWrite(redChannel, 255 - r); dst.)
-      ledcWrite(redChannel, r);
-      ledcWrite(greenChannel, g);
-      ledcWrite(blueChannel, b);
-
-      Serial.print("Red: "); Serial.print(r);
-      Serial.print(" | Green: "); Serial.print(g);
-      Serial.print(" | Blue: "); Serial.println(b);
+    // --- 2. FITUR SWITCH 1 SAMPAI 10 (Menggunakan indexOf) ---
+    // Jika teks di dalam kurung ditemukan di dalam variabel 'command'
+    else if (command.indexOf("ON1") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF1") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON2") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF2") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON3") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF3") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON4") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF4") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON5") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF5") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON6") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF6") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON7") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF7") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON8") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF8") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON9") >= 0)  { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF9") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    else if (command.indexOf("ON10") >= 0) { digitalWrite(pinBuzzer, HIGH); } 
+    else if (command.indexOf("OFF10") >= 0) { digitalWrite(pinBuzzer, LOW); }
+    
+    // --- 3. FITUR TERMINAL ---
+    else if (command.indexOf("speaker") >= 0) {
+      digitalWrite(pinBuzzer, HIGH);        
+      SerialBT.println("speaker aktif");    
+      delay(1000);                          
+      digitalWrite(pinBuzzer, LOW);         
     }
   }
+}
+
+void setColor(int red, int green, int blue) {
+  analogWrite(pinRed, red);
+  analogWrite(pinGreen, green);
+  analogWrite(pinBlue, blue);
 }
